@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Map Explorer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+    <nav id="toolbar">
+        <span class="tb-brand">World Map</span>
+        <div class="tb-divider"></div>
+        <div class="tb-group">
+            <label class="tb-label tb-color-label">
+                <span class="tb-swatch" id="swatch-highlight"></span>
+                Highlight
+                <input type="color" id="color-highlight" value="#3b82f6" class="tb-color">
+            </label>
+            <label class="tb-label tb-color-label">
+                <span class="tb-swatch" id="swatch-land"></span>
+                Land
+                <input type="color" id="color-land" value="#1e293b" class="tb-color">
+            </label>
+            <label class="tb-label tb-color-label">
+                <span class="tb-swatch" id="swatch-water"></span>
+                Water
+                <input type="color" id="color-water" value="#0f172a" class="tb-color">
+            </label>
+        </div>
+        <div class="tb-divider"></div>
+        <div class="tb-group">
+            <label class="tb-label toggle-crop-label">
+                <input type="checkbox" id="toggle-crop">
+                <span>Crop</span>
+            </label>
+        </div>
+        <div class="tb-group" id="crop-inputs">
+            <label class="tb-label">X <input type="number" id="crop-x" class="tb-input tb-input-sm" min="0" step="1"></label>
+            <label class="tb-label">Y <input type="number" id="crop-y" class="tb-input tb-input-sm" min="0" step="1"></label>
+            <label class="tb-label">W <input type="number" id="crop-w" class="tb-input tb-input-sm" min="1" step="1"></label>
+            <label class="tb-label">H <input type="number" id="crop-h" class="tb-input tb-input-sm" min="1" step="1"></label>
+            <button id="select-btn" class="tb-btn" disabled>Select</button>
+        </div>
+        <div class="tb-divider"></div>
+        <button id="theme-btn" class="tb-btn tb-btn-icon" title="Toggle theme">☀</button>
+        <button id="save-btn" class="tb-btn">Save as Image</button>
+        <button id="reset-btn" class="tb-btn tb-btn-reset">Reset</button>
+        <div class="tb-divider"></div>
+        <button id="about-btn" class="tb-btn tb-btn-reset">About</button>
+    </nav>
+
+    <div id="main-area">
+        <aside id="sidebar">
+            <div class="search-box">
+                <div class="tag-input" id="tag-input">
+                    <div class="tag-list" id="tag-list"></div>
+                    <input type="text" id="search" placeholder="Search or select country..." autocomplete="off">
+                </div>
+            </div>
+            <div class="controls">
+                <label class="toggle-label">
+                    <input type="checkbox" id="toggle-highlight" checked>
+                    <span class="toggle-text">Highlight on hover</span>
+                </label>
+            </div>
+            <div id="country-list"></div>
+        </aside>
+        <main id="map-container">
+            <canvas id="map"></canvas>
+        </main>
+    </div>
+</div>
+<div id="about-overlay" class="modal-overlay hidden">
+    <div class="modal-box modal-box-wide">
+        <h2>World Map Explorer</h2>
+        <div class="about-section">
+            <h3>Usage</h3>
+            <ul>
+                <li><strong>Hover</strong> over a country to highlight it</li>
+                <li><strong>Click</strong> a country to select/deselect it (shown in sidebar)</li>
+                <li><strong>Search</strong> countries by name in the sidebar</li>
+                <li>Toggle <strong>Highlight on hover</strong> in the sidebar</li>
+                <li>Enable <strong>Crop</strong> to define an export region — drag the selection or resize via handles, or type X/Y/W/H values</li>
+                <li><strong>Save as Image</strong> exports the map. When crop is active, only the cropped region is saved</li>
+                <li>Use <strong>Reset</strong> to clear all selections and restore defaults</li>
+                <li>Toggle <strong>☀/☾</strong> to switch between light and dark themes</li>
+            </ul>
+        </div>
+        <div class="about-section">
+            <p>Created by <strong>Kobchaipuk Kemapirom</strong></p>
+            <p><a href="mailto:imp.metropolian@gmail.com">imp.metropolian@gmail.com</a></p>
+        </div>
+        <button id="about-close" class="tb-btn">Close</button>
+    </div>
+</div>
+<script src="node_modules/topojson-client/dist/topojson-client.min.js"></script>
+<script src="helpers.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
