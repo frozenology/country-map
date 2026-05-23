@@ -39,6 +39,7 @@ An interactive world map application built with HTML Canvas and TopoJSON. Browse
 
 ## Credits
 
+Frozenology and
 Created by **Kobchaipuk Kemapirom**  
 [imp.metropolian@gmail.com](mailto:imp.metropolian@gmail.com)
 
