@@ -18,6 +18,8 @@ function saveState() {
             drawBorders,
             border: COLORS.border,
             borderWidth,
+            mapRenderW,
+            mapRenderH,
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) { /* storage full or unavailable */ }
@@ -54,6 +56,8 @@ function loadState() {
             borderWidth = Math.max(0, Number(data.borderWidth) || 0);
             if (borderSizeInput) borderSizeInput.value = String(borderWidth);
         }
+        if (data.mapRenderW != null && data.mapRenderW >= 100) mapRenderW = data.mapRenderW;
+        if (data.mapRenderH != null && data.mapRenderH >= 100) mapRenderH = data.mapRenderH;
         if (data.showCrop && data.sel) {
             showCrop = true;
             toggleCrop.checked = true;
@@ -147,6 +151,8 @@ async function loadData() {
         populateList();
         if (!loadState()) {
             applyTheme('dark', true);
+        } else {
+            resizeCanvas();
         }
         render();
     } catch (err) {
