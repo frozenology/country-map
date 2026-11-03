@@ -159,14 +159,26 @@ function buildPath(ctx, feature, w, h) {
     }
 }
 function drawFeature(ctx, feature, fill, stroke, w, h) {
+    // 1) Fill polygon first
     ctx.beginPath();
     buildPath(ctx, feature, w, h);
     ctx.fillStyle = fill;
     ctx.fill('evenodd');
+
+    // 2) Inner border after fill: clip to interior, stroke at 2× width
+    //    so only the half inside the polygon remains visible
     if (drawBorders && borderWidth > 0) {
+        ctx.save();
+        ctx.beginPath();
+        buildPath(ctx, feature, w, h);
+        ctx.clip('evenodd');
+        ctx.beginPath();
+        buildPath(ctx, feature, w, h);
         ctx.strokeStyle = stroke || COLORS.border;
-        ctx.lineWidth = borderWidth;
+        ctx.lineWidth = borderWidth * 2;
+        ctx.lineJoin = 'round';
         ctx.stroke();
+        ctx.restore();
     }
 }
 function pointInFeature(mapX, mapY, feature, w, h) {
