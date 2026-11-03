@@ -1,6 +1,6 @@
 /**
  * geoengine.js — map projection, drawing, selection, crop, zoom/pan
- * Loaded before other geoengine modules. Depends on helpers.js and topojson-client.
+ * Depends on helpers.js and topojson-client.
  */
 const canvas = $('map');
 const ctx = canvas.getContext('2d');
@@ -13,6 +13,10 @@ const tagInput = $('tag-input');
 const colorHighlight = $('color-highlight');
 const colorLand = $('color-land');
 const colorWater = $('color-water');
+const toggleBorder = $('toggle-border');
+const colorBorder = $('color-border');
+const swatchBorder = $('swatch-border');
+const borderSizeInput = $('border-size');
 const swatchHighlight = $('swatch-highlight');
 const swatchLand = $('swatch-land');
 const swatchWater = $('swatch-water');
@@ -23,6 +27,10 @@ const themeBtn = $('theme-btn');
 const aboutBtn = $('about-btn');
 const aboutOverlay = $('about-overlay');
 const aboutClose = $('about-close');
+const exportBtn = $('export-btn');
+const exportPanel = $('export-panel');
+const exportClose = $('export-close');
+const toggleTransparentWater = $('toggle-transparent-water');
 const STORAGE_KEY = 'genmap-config';
 const toggleCrop = $('toggle-crop');
 const cropInputs = $('crop-inputs');
@@ -58,11 +66,14 @@ let COLORS = {
     water: '#0f172a',
     land: '#1e293b',
     landStroke: '#334155',
+    border: '#334155',
     hover: '#3b82f6',
     hoverStroke: '#2563eb',
     selected: '#ef4444',
     selectedStroke: '#dc2626',
 };
+let drawBorders = true;
+let borderWidth = 0.5;
 let theme = 'dark';
 const THEME_COLORS = {
     dark: { water: '#0f172a', land: '#1e293b', landStroke: '#334155' },
@@ -152,9 +163,11 @@ function drawFeature(ctx, feature, fill, stroke, w, h) {
     buildPath(ctx, feature, w, h);
     ctx.fillStyle = fill;
     ctx.fill('evenodd');
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 0.5;
-    ctx.stroke();
+    if (drawBorders && borderWidth > 0) {
+        ctx.strokeStyle = stroke || COLORS.border;
+        ctx.lineWidth = borderWidth;
+        ctx.stroke();
+    }
 }
 function pointInFeature(mapX, mapY, feature, w, h) {
     ctx.save();
@@ -344,9 +357,14 @@ function selectCountriesInMarquee() {
     populateList(searchInput.value);
     saveState();
 }
-function drawMap(targetCtx, w, h, showHover) {
-    targetCtx.fillStyle = COLORS.water;
-    targetCtx.fillRect(0, 0, w, h);
+function drawMap(targetCtx, w, h, showHover, opts) {
+    opts = opts || {};
+    if (opts.transparentWater) {
+        targetCtx.clearRect(0, 0, w, h);
+    } else {
+        targetCtx.fillStyle = COLORS.water;
+        targetCtx.fillRect(0, 0, w, h);
+    }
     targetCtx.save();
     targetCtx.beginPath();
     targetCtx.rect(0, 0, w, h);
@@ -362,7 +380,7 @@ function drawMap(targetCtx, w, h, showHover) {
                 stroke = COLORS.hoverStroke;
             } else {
                 fill = COLORS.land;
-                stroke = COLORS.landStroke;
+                stroke = COLORS.border;
             }
             drawFeature(targetCtx, f, fill, stroke, w, h);
         } catch (e) {
