@@ -130,6 +130,24 @@ colorHighlight.on('input', (e) => updateColor('highlight', e.target.value));
 colorLand.on('input', (e) => updateColor('land', e.target.value));
 colorWater.on('input', (e) => updateColor('water', e.target.value));
 
+if (toggleBorder) {
+    toggleBorder.on('change', () => {
+        drawBorders = toggleBorder.checked;
+        render();
+        saveState();
+    });
+}
+if (colorBorder) {
+    colorBorder.on('input', (e) => updateColor('border', e.target.value));
+}
+if (borderSizeInput) {
+    borderSizeInput.on('input', () => {
+        borderWidth = Math.max(0, parseFloat(borderSizeInput.value) || 0);
+        render();
+        saveState();
+    });
+}
+
 saveBtn.on('click', saveAsImage);
 selectBtn.on('click', selectCountriesInCrop);
 
@@ -154,6 +172,23 @@ resetBtn.on('click', () => {
     render();
     saveState();
 });
+
+
+function setExportPanelOpen(open) {
+    if (!exportPanel) return;
+    exportPanel.toggleCls('hidden', !open);
+    if (exportBtn) exportBtn.toggleCls('active', open);
+}
+
+if (exportBtn) {
+    exportBtn.on('click', () => {
+        const open = exportPanel && exportPanel.classList.contains('hidden');
+        setExportPanelOpen(open);
+    });
+}
+if (exportClose) {
+    exportClose.on('click', () => setExportPanelOpen(false));
+}
 
 window.on('resize', () => { resizeCanvas(); render(); });
 
