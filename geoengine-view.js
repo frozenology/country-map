@@ -17,21 +17,59 @@ function render() {
     drawMarquee(ctx);
 }
 
+function syncCanvasSizeInputs(cssW, cssH) {
+    if (canvasWidthInput && document.activeElement !== canvasWidthInput) {
+        canvasWidthInput.value = String(Math.round(cssW));
+    }
+    if (canvasHeightInput && document.activeElement !== canvasHeightInput) {
+        canvasHeightInput.value = String(Math.round(cssH));
+    }
+}
+
+function getRenderSize() {
+    const rect = mapContainer.getBoundingClientRect();
+    const cssW = (mapRenderW != null && mapRenderW > 0) ? mapRenderW : Math.max(1, rect.width);
+    const cssH = (mapRenderH != null && mapRenderH > 0) ? mapRenderH : Math.max(1, rect.height);
+    return { cssW, cssH, rect };
+}
+
 function resizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
-    const rect = mapContainer.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
+    const { cssW, cssH, rect } = getRenderSize();
+
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    // Display size: fit inside container while keeping aspect
+    const scale = Math.min(
+        rect.width / cssW || 1,
+        rect.height / cssH || 1,
+        1
+    );
+    const dispW = Math.max(1, cssW * scale);
+    const dispH = Math.max(1, cssH * scale);
+    canvas.style.width = dispW + 'px';
+    canvas.style.height = dispH + 'px';
+
     applyViewTransform();
     if (!sel.w && !sel.h) {
-        initSelection(rect.width, rect.height);
+        initSelection(cssW, cssH);
     } else if (sel.w || sel.h) {
-        clampSel(rect.width, rect.height);
+        clampSel(cssW, cssH);
         syncSelToInputs();
     }
-    clampView(rect.width, rect.height);
+    clampView(cssW, cssH);
+    syncCanvasSizeInputs(cssW, cssH);
+}
+
+function applyCanvasSizeFromInputs() {
+    const w = parseInt(canvasWidthInput && canvasWidthInput.value, 10);
+    const h = parseInt(canvasHeightInput && canvasHeightInput.value, 10);
+    mapRenderW = (Number.isFinite(w) && w >= 100) ? w : null;
+    mapRenderH = (Number.isFinite(h) && h >= 100) ? h : null;
+    resetView();
+    resizeCanvas();
+    render();
+    saveState();
 }
 
 function darken(hex, amount) {
