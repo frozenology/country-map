@@ -31,6 +31,7 @@ const exportBtn = $('export-btn');
 const exportPanel = $('export-panel');
 const exportClose = $('export-close');
 const toggleTransparentWater = $('toggle-transparent-water');
+const toggleTransparentBorder = $('toggle-transparent-border');
 const STORAGE_KEY = 'genmap-config';
 const toggleCrop = $('toggle-crop');
 const cropInputs = $('crop-inputs');
@@ -394,8 +395,8 @@ function drawMap(targetCtx, w, h, showHover, opts) {
         }
     }
 
-    // Pass 2: borders on top of every country (including selected/highlight)
-    if (drawBorders && borderWidth > 0) {
+    // Pass 2: borders on top (skip when export requests transparent borders)
+    if (drawBorders && borderWidth > 0 && !opts.transparentBorder) {
         for (const f of features) {
             try {
                 drawFeature(targetCtx, f, COLORS.land, COLORS.border, w, h, 'stroke');
