@@ -27,27 +27,26 @@
                 Water
                 <input type="color" id="color-water" value="#0f172a" class="tb-color">
             </label>
-        </div>
-        <div class="tb-divider"></div>
-        <div class="tb-group">
-            <label class="tb-label toggle-crop-label">
-                <input type="checkbox" id="toggle-crop">
-                <span>Crop</span>
+            <label class="tb-label toggle-crop-label" title="Draw country borders">
+                <input type="checkbox" id="toggle-border" checked>
+                <span>Border</span>
+            </label>
+            <label class="tb-label tb-color-label" id="border-color-label">
+                <span class="tb-swatch" id="swatch-border"></span>
+                Border
+                <input type="color" id="color-border" value="#334155" class="tb-color">
+            </label>
+            <label class="tb-label" id="border-size-label">
+                Size
+                <input type="number" id="border-size" class="tb-input tb-input-sm" min="0" max="8" step="0.1" value="0.5">
             </label>
         </div>
-        <div class="tb-group" id="crop-inputs">
-            <label class="tb-label">X <input type="number" id="crop-x" class="tb-input tb-input-sm" min="0" step="1"></label>
-            <label class="tb-label">Y <input type="number" id="crop-y" class="tb-input tb-input-sm" min="0" step="1"></label>
-            <label class="tb-label">W <input type="number" id="crop-w" class="tb-input tb-input-sm" min="1" step="1"></label>
-            <label class="tb-label">H <input type="number" id="crop-h" class="tb-input tb-input-sm" min="1" step="1"></label>
-            <button id="select-btn" class="tb-btn" disabled>Select</button>
-        </div>
-        <div class="tb-divider"></div>
+        <div class="tb-spacer"></div>
         <button id="theme-btn" class="tb-btn tb-btn-icon" title="Toggle theme">☀</button>
-        <button id="save-btn" class="tb-btn">Save as Image</button>
         <button id="reset-btn" class="tb-btn tb-btn-reset">Reset</button>
-        <div class="tb-divider"></div>
         <button id="about-btn" class="tb-btn tb-btn-reset">About</button>
+        <div class="tb-divider"></div>
+        <button id="export-btn" class="tb-btn" title="Export panel">Export</button>
     </nav>
 
     <div id="main-area">
@@ -66,6 +65,7 @@
             </div>
             <div id="country-list"></div>
         </aside>
+
         <main id="map-container">
             <canvas id="map"></canvas>
             <div id="zoom-controls">
@@ -73,6 +73,39 @@
                 <span id="zoom-label">100%</span>
             </div>
         </main>
+
+        <aside id="export-panel" class="hidden" aria-label="Export options">
+            <div class="export-header">
+                <h2>Export</h2>
+                <button id="export-close" class="tb-btn tb-btn-icon" title="Close">✕</button>
+            </div>
+
+            <section class="export-section">
+                <label class="toggle-label">
+                    <input type="checkbox" id="toggle-crop">
+                    <span class="toggle-text">Crop region</span>
+                </label>
+                <div id="crop-inputs" class="export-fields disabled">
+                    <label class="export-field">X <input type="number" id="crop-x" class="tb-input" min="0" step="1"></label>
+                    <label class="export-field">Y <input type="number" id="crop-y" class="tb-input" min="0" step="1"></label>
+                    <label class="export-field">W <input type="number" id="crop-w" class="tb-input" min="1" step="1"></label>
+                    <label class="export-field">H <input type="number" id="crop-h" class="tb-input" min="1" step="1"></label>
+                </div>
+                <button id="select-btn" class="tb-btn export-full-btn" disabled>Select countries in crop</button>
+            </section>
+
+            <section class="export-section">
+                <label class="toggle-label">
+                    <input type="checkbox" id="toggle-transparent-water">
+                    <span class="toggle-text">Transparent water</span>
+                </label>
+                <p class="export-hint">Water areas are left transparent in the PNG (useful for overlays).</p>
+            </section>
+
+            <section class="export-section export-actions">
+                <button id="save-btn" class="tb-btn export-full-btn">Save as Image</button>
+            </section>
+        </aside>
     </div>
 </div>
 <div id="about-overlay" class="modal-overlay hidden">
@@ -85,13 +118,14 @@
                 <li><strong>Click</strong> a country to select/deselect it (shown in sidebar)</li>
                 <li><strong>Search</strong> countries by name in the sidebar</li>
                 <li>Toggle <strong>Highlight on hover</strong> in the sidebar</li>
-                <li>Enable <strong>Crop</strong> to define an export region — drag the selection or resize via handles, or type X/Y/W/H values</li>
-                <li><strong>Save as Image</strong> exports the map. When crop is active, only the cropped region is saved</li>
+                <li>Open <strong>Export</strong> (navbar) for crop, transparent water, and save</li>
+                <li>Enable <strong>Crop</strong> to define an export region — drag or resize via handles, or type X/Y/W/H</li>
+                <li><strong>Save as Image</strong> exports the map (cropped region when crop is on)</li>
                 <li>Use <strong>Reset</strong> to clear all selections and restore defaults</li>
-                <li>Toggle <strong>☀/☾</strong> to switch between light and dark themes</li>
-                <li><strong>Mouse wheel</strong> to zoom in/out (or use the zoom slider at bottom-right)</li>
-                <li><strong>Middle-click drag</strong> to pan when zoomed</li>
-                <li><strong>Shift + click-drag</strong> to draw a selection rectangle and select multiple countries</li>
+                <li>Toggle <strong>☀/☾</strong> for light/dark themes</li>
+                <li><strong>Mouse wheel</strong> to zoom (or use the bottom-right slider)</li>
+                <li><strong>Middle-click drag</strong> to pan</li>
+                <li><strong>Shift + click-drag</strong> for multi-select rectangle</li>
             </ul>
         </div>
         <div class="about-section">
