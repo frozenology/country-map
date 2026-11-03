@@ -236,13 +236,14 @@ function saveAsImage() {
     const cssW = canvas.width / dpr;
     const cssH = canvas.height / dpr;
     const transparent = !!(typeof toggleTransparentWater !== 'undefined' && toggleTransparentWater && toggleTransparentWater.checked);
+    const transparentBorder = !!(typeof toggleTransparentBorder !== 'undefined' && toggleTransparentBorder && toggleTransparentBorder.checked);
 
     const offscreen = document.createElement('canvas');
     offscreen.width = Math.round(cssW);
     offscreen.height = Math.round(cssH);
     const offCtx = offscreen.getContext('2d');
 
-    drawMap(offCtx, cssW, cssH, false, { transparentWater: transparent });
+    drawMap(offCtx, cssW, cssH, false, { transparentWater: transparent, transparentBorder });
 
     let outCanvas = offscreen;
 
