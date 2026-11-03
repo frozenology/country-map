@@ -68,6 +68,10 @@
         </aside>
         <main id="map-container">
             <canvas id="map"></canvas>
+            <div id="zoom-controls">
+                <input type="range" id="zoom-slider" min="50" max="800" value="100" step="1" title="Zoom">
+                <span id="zoom-label">100%</span>
+            </div>
         </main>
     </div>
 </div>
@@ -85,6 +89,9 @@
                 <li><strong>Save as Image</strong> exports the map. When crop is active, only the cropped region is saved</li>
                 <li>Use <strong>Reset</strong> to clear all selections and restore defaults</li>
                 <li>Toggle <strong>☀/☾</strong> to switch between light and dark themes</li>
+                <li><strong>Mouse wheel</strong> to zoom in/out (or use the zoom slider at bottom-right)</li>
+                <li><strong>Middle-click drag</strong> to pan when zoomed</li>
+                <li><strong>Shift + click-drag</strong> to draw a selection rectangle and select multiple countries</li>
             </ul>
         </div>
         <div class="about-section">
