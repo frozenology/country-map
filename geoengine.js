@@ -5,6 +5,8 @@
 const canvas = $('map');
 const ctx = canvas.getContext('2d');
 const mapContainer = $('map-container');
+const canvasWidthInput = $('canvas-width');
+const canvasHeightInput = $('canvas-height');
 const searchInput = $('search');
 const countryListEl = $('country-list');
 const toggleHighlight = $('toggle-highlight');
@@ -81,13 +83,28 @@ const THEME_COLORS = {
     light: { water: '#dbeafe', land: '#e2e8f0', landStroke: '#cbd5e1' },
 };
 const PADDING = 30;
+// Full rendering size (logical CSS px). null = follow container.
+let mapRenderW = null;
+let mapRenderH = null;
 function project(lng, lat, w, h) {
     const x = PADDING + (lng + 180) / 360 * (w - 2 * PADDING);
     const y = PADDING + (90 - lat) / 180 * (h - 2 * PADDING);
     return [x, y];
 }
+function clientToLogical(cx, cy) {
+    const dpr = window.devicePixelRatio || 1;
+    const logicalW = canvas.width / dpr;
+    const logicalH = canvas.height / dpr;
+    const dispW = canvas.clientWidth || logicalW;
+    const dispH = canvas.clientHeight || logicalH;
+    return [cx * (logicalW / dispW), cy * (logicalH / dispH)];
+}
 function screenToMap(cx, cy) {
-    return [(cx - viewOffsetX) / viewScale, (cy - viewOffsetY) / viewScale];
+    const [lx, ly] = clientToLogical(cx, cy);
+    return [
+        (lx - viewOffsetX) / viewScale,
+        (ly - viewOffsetY) / viewScale,
+    ];
 }
 function applyViewTransform() {
     const dpr = window.devicePixelRatio || 1;
@@ -99,14 +116,21 @@ function updateZoomUI() {
     if (zoomLabel) zoomLabel.textContent = pct + '%';
 }
 function setZoom(scale, focusCx, focusCy) {
-    const rect = mapContainer.getBoundingClientRect();
-    const cssW = rect.width, cssH = rect.height;
-    const cx = focusCx != null ? focusCx : cssW / 2;
-    const cy = focusCy != null ? focusCy : cssH / 2;
-    const [mapX, mapY] = screenToMap(cx, cy);
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.width / dpr;
+    const cssH = canvas.height / dpr;
+    let lx, ly;
+    if (focusCx != null && focusCy != null) {
+        [lx, ly] = clientToLogical(focusCx, focusCy);
+    } else {
+        lx = cssW / 2;
+        ly = cssH / 2;
+    }
+    const mapX = (lx - viewOffsetX) / viewScale;
+    const mapY = (ly - viewOffsetY) / viewScale;
     viewScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
-    viewOffsetX = cx - mapX * viewScale;
-    viewOffsetY = cy - mapY * viewScale;
+    viewOffsetX = lx - mapX * viewScale;
+    viewOffsetY = ly - mapY * viewScale;
     clampView(cssW, cssH);
     updateZoomUI();
     render();
