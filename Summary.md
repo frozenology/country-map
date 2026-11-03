@@ -98,7 +98,7 @@ Does not conflict with crop dragging: Shift always starts a marquee; crop handle
 | Function | Description |
 |---|---|
 | `saveAsImage()` | Renders the full logical map (or crop region) to a temporary canvas and downloads PNG. Ignores current zoom/pan so the export matches geographic content. |
-| `loadData()` | Fetches `countries-50m.json`, converts TopoJSON → GeoJSON features, builds the country list, restores state, and performs the first render. |
+| `loadData()` | Fetches `countries-50m.json`, `data/continents.json`, and `data/countries.json`, builds the country list, restores state, and performs the first render. |
 
 ---
 
@@ -121,7 +121,12 @@ Does not conflict with crop dragging: Shift always starts a marquee; crop handle
 |---|---|
 | `index.html` | Layout: toolbar, sidebar, map canvas, zoom controls, about modal. |
 | `style.css` | Theme variables, toolbar/sidebar/map layout, zoom control overlay. |
-| `script.js` | All application logic (rendering, interaction, state). |
+| `geoengine.js` | Projection, drawing, crop overlay, zoom/pan view transform. |
+| `geoengine-app.js` | Persistence, theme, country list/tags, export, TopoJSON load. |
+| `geoengine-interact.js` | Pointer handlers (pan, marquee, crop drag). |
+| `script.js` | UI event bindings (mouse, wheel, toolbar, sidebar). |
 | `helpers.js` | Small DOM helpers (`$`, `.on`, class utilities). |
+| `data/continents.json` | Ordered list of continent names for the sidebar. |
+| `data/countries.json` | Country name → continent mapping. |
 | `countries-50m.json` | TopoJSON world boundaries (~50m resolution). |
 | `js/topojson-client.min.js` | TopoJSON client library.
