@@ -15,6 +15,9 @@ function saveState() {
             showCrop,
             sel: showCrop ? { x: sel.x, y: sel.y, w: sel.w, h: sel.h } : null,
             highlightOn: toggleHighlight.checked,
+            drawBorders,
+            border: COLORS.border,
+            borderWidth,
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) { /* storage full or unavailable */ }
@@ -41,6 +44,15 @@ function loadState() {
         }
         if (data.highlightOn !== undefined) {
             toggleHighlight.checked = data.highlightOn;
+        }
+        if (data.drawBorders !== undefined) {
+            drawBorders = !!data.drawBorders;
+            if (toggleBorder) toggleBorder.checked = drawBorders;
+        }
+        if (data.border) updateColor('border', data.border);
+        if (data.borderWidth !== undefined) {
+            borderWidth = Math.max(0, Number(data.borderWidth) || 0);
+            if (borderSizeInput) borderSizeInput.value = String(borderWidth);
         }
         if (data.showCrop && data.sel) {
             showCrop = true;
@@ -80,6 +92,10 @@ function updateColor(which, hex) {
     } else if (which === 'water') {
         COLORS.water = hex;
         swatchWater.style.background = hex;
+    } else if (which === 'border') {
+        COLORS.border = hex;
+        COLORS.landStroke = hex;
+        if (swatchBorder) swatchBorder.style.background = hex;
     }
     render();
     saveState();
@@ -123,6 +139,9 @@ async function loadData() {
         swatchHighlight.style.background = COLORS.hover;
         swatchLand.style.background = COLORS.land;
         swatchWater.style.background = COLORS.water;
+        if (swatchBorder) swatchBorder.style.background = COLORS.border;
+        if (toggleBorder) toggleBorder.checked = drawBorders;
+        if (borderSizeInput) borderSizeInput.value = String(borderWidth);
 
         resizeCanvas();
         populateList();
@@ -216,13 +235,14 @@ function saveAsImage() {
     const dpr = window.devicePixelRatio || 1;
     const cssW = canvas.width / dpr;
     const cssH = canvas.height / dpr;
+    const transparent = !!(typeof toggleTransparentWater !== 'undefined' && toggleTransparentWater && toggleTransparentWater.checked);
 
     const offscreen = document.createElement('canvas');
     offscreen.width = Math.round(cssW);
     offscreen.height = Math.round(cssH);
     const offCtx = offscreen.getContext('2d');
 
-    drawMap(offCtx, cssW, cssH, false);
+    drawMap(offCtx, cssW, cssH, false, { transparentWater: transparent });
 
     let outCanvas = offscreen;
 
@@ -231,6 +251,9 @@ function saveAsImage() {
         outCanvas.width = Math.round(sel.w);
         outCanvas.height = Math.round(sel.h);
         const outCtx = outCanvas.getContext('2d');
+        if (transparent) {
+            outCtx.clearRect(0, 0, outCanvas.width, outCanvas.height);
+        }
         outCtx.drawImage(offscreen, sel.x, sel.y, sel.w, sel.h, 0, 0, sel.w, sel.h);
     }
 
