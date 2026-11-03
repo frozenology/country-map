@@ -158,16 +158,15 @@ function buildPath(ctx, feature, w, h) {
         }
     }
 }
-function drawFeature(ctx, feature, fill, stroke, w, h) {
-    // 1) Fill polygon first
-    ctx.beginPath();
-    buildPath(ctx, feature, w, h);
-    ctx.fillStyle = fill;
-    ctx.fill('evenodd');
-
-    // 2) Inner border after fill: clip to interior, stroke at 2× width
-    //    so only the half inside the polygon remains visible
-    if (drawBorders && borderWidth > 0) {
+function drawFeature(ctx, feature, fill, stroke, w, h, mode) {
+    mode = mode || 'both';
+    if (mode === 'fill' || mode === 'both') {
+        ctx.beginPath();
+        buildPath(ctx, feature, w, h);
+        ctx.fillStyle = fill;
+        ctx.fill('evenodd');
+    }
+    if ((mode === 'stroke' || mode === 'both') && drawBorders && borderWidth > 0) {
         ctx.save();
         ctx.beginPath();
         buildPath(ctx, feature, w, h);
@@ -382,21 +381,27 @@ function drawMap(targetCtx, w, h, showHover, opts) {
     targetCtx.rect(0, 0, w, h);
     targetCtx.clip();
     const highlightOn = toggleHighlight.checked;
+
+    // Pass 1: fill all countries (highlight/land)
     for (const f of features) {
         try {
             const id = f.id;
             const isHovered = showHover && highlightOn && mouseX >= 0 && lastHoveredId === id;
-            let fill, stroke;
-            if (highlightedIds.has(id) || isHovered) {
-                fill = COLORS.hover;
-                stroke = COLORS.hoverStroke;
-            } else {
-                fill = COLORS.land;
-                stroke = COLORS.border;
-            }
-            drawFeature(targetCtx, f, fill, stroke, w, h);
+            const fill = (highlightedIds.has(id) || isHovered) ? COLORS.hover : COLORS.land;
+            drawFeature(targetCtx, f, fill, COLORS.border, w, h, 'fill');
         } catch (e) {
             console.warn('Error rendering feature:', f.id, e);
+        }
+    }
+
+    // Pass 2: borders on top of every country (including selected/highlight)
+    if (drawBorders && borderWidth > 0) {
+        for (const f of features) {
+            try {
+                drawFeature(targetCtx, f, COLORS.land, COLORS.border, w, h, 'stroke');
+            } catch (e) {
+                console.warn('Error stroking feature:', f.id, e);
+            }
         }
     }
     targetCtx.restore();
