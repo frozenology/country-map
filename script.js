@@ -1,2 +1,4 @@
+// temporary - full script being uploaded
 const canvas = $('map');
-// FULL_CONTENT_PLACEHOLDER_SEE_LOCAL
+const ctx = canvas.getContext('2d');
+console.warn('Full script.js update in progress - please refresh after next commit');
