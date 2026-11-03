@@ -1,143 +1,117 @@
 /**
- * Pointer / interaction handlers (loaded after geoengine core)
+ * geoengine-interact.js — pointer, wheel, marquee, crop drag
  */
 function onPointerDown(e) {
-    dragOccurred = false;
     const rect = canvas.getBoundingClientRect();
     const cx = e.clientX - rect.left;
     const cy = e.clientY - rect.top;
-    const [mapX, mapY] = screenToMap(cx, cy);
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.width / dpr;
+    const cssH = canvas.height / dpr;
 
-    // Middle mouse → pan
+    // Middle mouse: pan
     if (e.button === 1) {
-        isPanning = true;
-        panStart.x = cx;
-        panStart.y = cy;
-        panStart.ox = viewOffsetX;
-        panStart.oy = viewOffsetY;
-        canvas.style.cursor = 'grabbing';
         e.preventDefault();
+        isPanning = true;
+        panStart = { x: cx, y: cy, ox: viewOffsetX, oy: viewOffsetY };
+        canvas.style.cursor = 'grabbing';
         return;
     }
 
-    // Shift + left → marquee multi-select
-    if (e.button === 0 && e.shiftKey) {
-        isMarquee = true;
-        marquee = { x0: mapX, y0: mapY, x1: mapX, y1: mapY };
-        dragOccurred = true;
+    if (e.button !== 0) return;
+
+    // Shift + drag: marquee multi-select
+    if (e.shiftKey) {
         e.preventDefault();
+        isMarquee = true;
+        const [mx, my] = screenToMap(cx, cy);
+        marquee = { x0: mx, y0: my, x1: mx, y1: my };
         render();
         return;
     }
 
-    // Crop handle / move (in map coordinates)
-    if (showCrop && sel.w && sel.h && (getHandleAt(mapX, mapY) || (mapX >= sel.x && mapX <= sel.x + sel.w && mapY >= sel.y && mapY <= sel.y + sel.h))) {
-        dragStartMouse.x = mapX;
-        dragStartMouse.y = mapY;
-        e.preventDefault();
-    } else {
-        dragStartMouse.x = -1;
-        dragStartMouse.y = -1;
+    // Crop handles / move
+    if (showCrop) {
+        const [mx, my] = screenToMap(cx, cy);
+        const handle = getHandleAt(mx, my);
+        if (handle) {
+            dragState = handle;
+            dragOccurred = false;
+            dragStartMouse = { x: mx, y: my };
+            dragStartSel = { x: sel.x, y: sel.y, w: sel.w, h: sel.h };
+            e.preventDefault();
+            return;
+        }
+        if (mx >= sel.x && mx <= sel.x + sel.w && my >= sel.y && my <= sel.y + sel.h) {
+            dragState = 'move';
+            dragOccurred = false;
+            dragStartMouse = { x: mx, y: my };
+            dragStartSel = { x: sel.x, y: sel.y, w: sel.w, h: sel.h };
+            e.preventDefault();
+            return;
+        }
+    }
+
+    // Country click selection
+    const [mx, my] = screenToMap(cx, cy);
+    const f = findCountryAt(mx, my, cssW, cssH);
+    if (f) {
+        selectCountry(f.id);
     }
 }
 
 function onPointerMove(e) {
-    const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     const cx = e.clientX - rect.left;
     const cy = e.clientY - rect.top;
-    const [mapX, mapY] = screenToMap(cx, cy);
-    mouseX = mapX;
-    mouseY = mapY;
-
+    const dpr = window.devicePixelRatio || 1;
     const cssW = canvas.width / dpr;
     const cssH = canvas.height / dpr;
 
-    // Pan with middle mouse
+    mouseX = cx;
+    mouseY = cy;
+
     if (isPanning) {
-        viewOffsetX = panStart.ox + (cx - panStart.x);
-        viewOffsetY = panStart.oy + (cy - panStart.y);
+        const dpr = window.devicePixelRatio || 1;
+        const logicalW = canvas.width / dpr;
+        const logicalH = canvas.height / dpr;
+        const dispW = canvas.clientWidth || logicalW;
+        const dispH = canvas.clientHeight || logicalH;
+        const sx = logicalW / dispW;
+        const sy = logicalH / dispH;
+        viewOffsetX = panStart.ox + (cx - panStart.x) * sx;
+        viewOffsetY = panStart.oy + (cy - panStart.y) * sy;
         clampView(cssW, cssH);
-        canvas.style.cursor = 'grabbing';
         render();
         return;
     }
 
-    // Marquee drag
     if (isMarquee && marquee) {
-        marquee.x1 = mapX;
-        marquee.y1 = mapY;
-        canvas.style.cursor = 'crosshair';
+        const [mx, my] = screenToMap(cx, cy);
+        marquee.x1 = mx;
+        marquee.y1 = my;
         render();
         return;
-    }
-
-    if (!dragState && showCrop && sel.w && sel.h && dragStartMouse.x >= 0) {
-        const dx = mapX - dragStartMouse.x;
-        const dy = mapY - dragStartMouse.y;
-        if (dx * dx + dy * dy > 9 / (viewScale * viewScale)) {
-            const handle = getHandleAt(dragStartMouse.x, dragStartMouse.y);
-            if (handle) {
-                dragState = handle;
-            } else if (
-                dragStartMouse.x >= sel.x && dragStartMouse.x <= sel.x + sel.w &&
-                dragStartMouse.y >= sel.y && dragStartMouse.y <= sel.y + sel.h
-            ) {
-                dragState = 'move';
-            }
-            if (dragState) {
-                dragStartSel.x = sel.x;
-                dragStartSel.y = sel.y;
-                dragStartSel.w = sel.w;
-                dragStartSel.h = sel.h;
-            }
-        }
     }
 
     if (dragState) {
-        const dx = mapX - dragStartMouse.x;
-        const dy = mapY - dragStartMouse.y;
+        const [mx, my] = screenToMap(cx, cy);
+        const dx = mx - dragStartMouse.x;
+        const dy = my - dragStartMouse.y;
+        if (Math.abs(dx) > 1 || Math.abs(dy) > 1) dragOccurred = true;
         const s = dragStartSel;
-
-        switch (dragState) {
-            case 'move':
-                sel.x = Math.round(s.x + dx);
-                sel.y = Math.round(s.y + dy);
-                break;
-            case 'nw':
-                sel.x = Math.round(s.x + dx);
-                sel.y = Math.round(s.y + dy);
-                sel.w = Math.round(s.w - dx);
-                sel.h = Math.round(s.h - dy);
-                break;
-            case 'n':
-                sel.y = Math.round(s.y + dy);
-                sel.h = Math.round(s.h - dy);
-                break;
-            case 'ne':
-                sel.y = Math.round(s.y + dy);
-                sel.w = Math.round(s.w + dx);
-                sel.h = Math.round(s.h - dy);
-                break;
-            case 'e':
-                sel.w = Math.round(s.w + dx);
-                break;
-            case 'se':
-                sel.w = Math.round(s.w + dx);
-                sel.h = Math.round(s.h + dy);
-                break;
-            case 's':
-                sel.h = Math.round(s.h + dy);
-                break;
-            case 'sw':
-                sel.x = Math.round(s.x + dx);
-                sel.w = Math.round(s.w - dx);
-                sel.h = Math.round(s.h + dy);
-                break;
-            case 'w':
-                sel.x = Math.round(s.x + dx);
-                sel.w = Math.round(s.w - dx);
-                break;
+        if (dragState === 'move') {
+            sel.x = s.x + dx;
+            sel.y = s.y + dy;
+        } else {
+            let x = s.x, y = s.y, w = s.w, h = s.h;
+            if (dragState.includes('w')) { x = s.x + dx; w = s.w - dx; }
+            if (dragState.includes('e')) { w = s.w + dx; }
+            if (dragState.includes('n')) { y = s.y + dy; h = s.h - dy; }
+            if (dragState.includes('s')) { h = s.h + dy; }
+            if (w < 1) { x = x + w - 1; w = 1; }
+            if (h < 1) { y = y + h - 1; h = 1; }
+            sel.x = x; sel.y = y; sel.w = w; sel.h = h;
         }
         clampSel(cssW, cssH);
         syncSelToInputs();
@@ -145,56 +119,50 @@ function onPointerMove(e) {
         return;
     }
 
-    if (showCrop && sel.w && sel.h) {
-        const overHandle = getHandleAt(mapX, mapY);
-        if (overHandle) {
-            canvas.style.cursor = HANDLE_CURSORS[overHandle];
-            return;
-        }
-        if (mapX >= sel.x && mapX <= sel.x + sel.w && mapY >= sel.y && mapY <= sel.y + sel.h) {
-            canvas.style.cursor = 'move';
-            return;
-        }
-    }
-
-    if (!toggleHighlight.checked) {
-        if (lastHoveredId !== null) {
-            lastHoveredId = null;
-            render();
-        }
-        canvas.style.cursor = viewScale !== 1 ? 'grab' : 'default';
-        return;
-    }
-
-    const hit = findCountryAt(mapX, mapY, cssW, cssH);
-    const hitId = hit ? hit.id : null;
-
-    if (hitId !== lastHoveredId) {
-        lastHoveredId = hitId;
+    // Hover highlight
+    const [mx, my] = screenToMap(cx, cy);
+    const f = findCountryAt(mx, my, cssW, cssH);
+    const newId = f ? f.id : null;
+    if (newId !== lastHoveredId) {
+        lastHoveredId = newId;
         render();
     }
 
-    canvas.style.cursor = lastHoveredId ? 'pointer' : (viewScale !== 1 ? 'grab' : 'default');
+    if (showCrop) {
+        const handle = getHandleAt(mx, my);
+        if (handle) canvas.style.cursor = HANDLE_CURSORS[handle] || 'default';
+        else if (mx >= sel.x && mx <= sel.x + sel.w && my >= sel.y && my <= sel.y + sel.h) canvas.style.cursor = 'move';
+        else canvas.style.cursor = 'default';
+    } else {
+        canvas.style.cursor = lastHoveredId ? 'pointer' : 'default';
+    }
 }
 
 function onPointerUp(e) {
     if (isPanning) {
         isPanning = false;
-        dragOccurred = true;
-        canvas.style.cursor = viewScale !== 1 ? 'grab' : 'default';
+        canvas.style.cursor = 'default';
+        return;
     }
     if (isMarquee) {
         isMarquee = false;
         selectCountriesInMarquee();
         marquee = null;
-        dragOccurred = true;
         render();
+        return;
     }
     if (dragState) {
         dragState = null;
-        dragOccurred = true;
-        dragStartMouse.x = -1;
-        dragStartMouse.y = -1;
-        render();
+        if (dragOccurred) saveState();
+        return;
     }
+}
+
+function onWheel(e) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+    setZoom(viewScale * factor, cx, cy);
 }

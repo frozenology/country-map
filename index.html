@@ -11,6 +11,11 @@
     <nav id="toolbar">
         <span class="tb-brand">World Map</span>
         <div class="tb-divider"></div>
+        <div class="tb-group" title="Full map rendering size (logical pixels)">
+            <label class="tb-label">W <input type="number" id="canvas-width" class="tb-input tb-input-sm" min="100" max="8192" step="1"></label>
+            <label class="tb-label">H <input type="number" id="canvas-height" class="tb-input tb-input-sm" min="100" max="8192" step="1"></label>
+        </div>
+        <div class="tb-divider"></div>
         <div class="tb-group">
             <label class="tb-label tb-color-label">
                 <span class="tb-swatch" id="swatch-highlight"></span>
@@ -128,6 +133,7 @@
                 <li><strong>Save as Image</strong> exports the map (cropped region when crop is on)</li>
                 <li>Use <strong>Reset</strong> to clear all selections and restore defaults</li>
                 <li>Toggle <strong>☀/☾</strong> for light/dark themes</li>
+                <li>Set <strong>W / H</strong> on the navbar for full map rendering size</li>
                 <li><strong>Mouse wheel</strong> to zoom (or use the bottom-right slider)</li>
                 <li><strong>Middle-click drag</strong> to pan</li>
                 <li><strong>Shift + click-drag</strong> for multi-select rectangle</li>
