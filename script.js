@@ -1,129 +1,160 @@
 /**
- * script.js — event bindings only
+ * script.js — create GeoEngine instance and bind UI events
+ * Element id names are passed into initialize() via the constructor.
  */
-searchInput.on('input', () => populateList(searchInput.value));
-
-toggleHighlight.on('change', () => {
-    render();
-    saveState();
+const engine = new GeoEngine({
+    canvas: 'map',
+    mapContainer: 'map-container',
+    canvasWidthInput: 'canvas-width',
+    canvasHeightInput: 'canvas-height',
+    searchInput: 'search',
+    countryListEl: 'country-list',
+    toggleHighlight: 'toggle-highlight',
+    tagList: 'tag-list',
+    tagInput: 'tag-input',
+    colorHighlight: 'color-highlight',
+    colorLand: 'color-land',
+    colorWater: 'color-water',
+    toggleBorder: 'toggle-border',
+    colorBorder: 'color-border',
+    swatchBorder: 'swatch-border',
+    borderSizeInput: 'border-size',
+    swatchHighlight: 'swatch-highlight',
+    swatchLand: 'swatch-land',
+    swatchWater: 'swatch-water',
+    saveBtn: 'save-btn',
+    selectBtn: 'select-btn',
+    resetBtn: 'reset-btn',
+    themeBtn: 'theme-btn',
+    aboutBtn: 'about-btn',
+    aboutOverlay: 'about-overlay',
+    aboutClose: 'about-close',
+    exportBtn: 'export-btn',
+    exportPanel: 'export-panel',
+    exportClose: 'export-close',
+    toggleTransparentWater: 'toggle-transparent-water',
+    toggleTransparentBorder: 'toggle-transparent-border',
+    toggleCrop: 'toggle-crop',
+    cropInputs: 'crop-inputs',
+    cropX: 'crop-x',
+    cropY: 'crop-y',
+    cropW: 'crop-w',
+    cropH: 'crop-h',
+    zoomSlider: 'zoom-slider',
+    zoomLabel: 'zoom-label'
 });
 
-colorHighlight.on('input', () => updateColor('highlight', colorHighlight.value));
-colorLand.on('input', () => updateColor('land', colorLand.value));
-colorWater.on('input', () => updateColor('water', colorWater.value));
+engine.searchInput.on('input', () => engine.populateList(engine.searchInput.value));
 
-if (toggleBorder) {
-    toggleBorder.on('change', () => {
-        drawBorders = toggleBorder.checked;
-        render();
-        saveState();
+engine.toggleHighlight.on('change', () => {
+    engine.render();
+    engine.saveState();
+});
+
+engine.colorHighlight.on('input', (e) => engine.updateColor('highlight', e.target.value));
+engine.colorLand.on('input', (e) => engine.updateColor('land', e.target.value));
+engine.colorWater.on('input', (e) => engine.updateColor('water', e.target.value));
+
+if (engine.toggleBorder) {
+    engine.toggleBorder.on('change', () => {
+        engine.drawBorders = engine.toggleBorder.checked;
+        engine.render();
+        engine.saveState();
     });
 }
-if (colorBorder) {
-    colorBorder.on('input', () => updateColor('border', colorBorder.value));
+if (engine.colorBorder) {
+    engine.colorBorder.on('input', (e) => engine.updateColor('border', e.target.value));
 }
-if (borderSizeInput) {
-    borderSizeInput.on('change', () => {
-        borderWidth = Math.max(0, parseFloat(borderSizeInput.value) || 0);
-        render();
-        saveState();
-    });
-    borderSizeInput.on('input', () => {
-        borderWidth = Math.max(0, parseFloat(borderSizeInput.value) || 0);
-        render();
+if (engine.borderSizeInput) {
+    engine.borderSizeInput.on('input', () => {
+        engine.borderWidth = Math.max(0, parseFloat(engine.borderSizeInput.value) || 0);
+        engine.render();
+        engine.saveState();
     });
 }
 
-toggleCrop.on('change', () => {
-    showCrop = toggleCrop.checked;
-    selectBtn.disabled = !showCrop;
-    if (showCrop) {
-        cropInputs.rmCls('disabled');
+engine.toggleCrop.on('change', () => {
+    engine.showCrop = engine.toggleCrop.checked;
+    engine.selectBtn.disabled = !engine.showCrop;
+    if (engine.showCrop) {
+        engine.cropInputs.rmCls('disabled');
         const dpr = window.devicePixelRatio || 1;
-        const cssW = canvas.width / dpr;
-        const cssH = canvas.height / dpr;
-        if (!sel.w || !sel.h) initSelection(cssW, cssH);
+        const cssW = engine.canvas.width / dpr;
+        const cssH = engine.canvas.height / dpr;
+        if (!engine.sel.w || !engine.sel.h) engine.initSelection(cssW, cssH);
         else {
-            clampSel(cssW, cssH);
-            syncSelToInputs();
+            engine.clampSel(cssW, cssH);
+            engine.syncSelToInputs();
         }
     } else {
-        cropInputs.addCls('disabled');
+        engine.cropInputs.addCls('disabled');
     }
-    render();
-    saveState();
+    engine.render();
+    engine.saveState();
 });
 
-[cropX, cropY, cropW, cropH].forEach(inp => {
+[engine.cropX, engine.cropY, engine.cropW, engine.cropH].forEach(inp => {
     if (!inp) return;
-    inp.on('change', syncInputsToSel);
+    inp.on('change', function () { engine.syncInputsToSel(); });
+    inp.on('input', function () { engine.syncInputsToSel(); });
 });
 
-selectBtn.on('click', selectCountriesInCrop);
-saveBtn.on('click', saveAsImage);
+engine.selectBtn.on('click', function () { engine.selectCountriesInCrop(); });
+engine.saveBtn.on('click', function () { engine.saveAsImage(); });
+engine.resetBtn.on('click', function () { engine.resetAll(); });
 
-if (exportBtn && exportPanel) {
-    exportBtn.on('click', () => {
-        exportPanel.classList.toggle('hidden');
+engine.themeBtn.on('click', () => {
+    engine.applyTheme(engine.theme === 'dark' ? 'light' : 'dark', false);
+    engine.saveState();
+    engine.render();
+});
+
+engine.aboutBtn.on('click', () => engine.aboutOverlay.rmCls('hidden'));
+engine.aboutClose.on('click', () => engine.aboutOverlay.addCls('hidden'));
+engine.aboutOverlay.on('click', (e) => {
+    if (e.target === engine.aboutOverlay) engine.aboutOverlay.addCls('hidden');
+});
+
+if (engine.exportBtn) {
+    engine.exportBtn.on('click', () => {
+        const open = engine.exportPanel && engine.exportPanel.classList.contains('hidden');
+        engine.setExportPanelOpen(open);
     });
 }
-if (exportClose && exportPanel) {
-    exportClose.on('click', () => exportPanel.addCls('hidden'));
+if (engine.exportClose) {
+    engine.exportClose.on('click', () => engine.setExportPanelOpen(false));
 }
 
-resetBtn.on('click', () => {
-    highlightedIds.clear();
-    renderTags();
-    populateList(searchInput.value);
-    showCrop = false;
-    toggleCrop.checked = false;
-    selectBtn.disabled = true;
-    cropInputs.addCls('disabled');
-    sel = { x: 0, y: 0, w: 0, h: 0 };
-    mapRenderW = null;
-    mapRenderH = null;
-    resetView();
-    resizeCanvas();
-    render();
-    saveState();
-});
+engine.canvas.on('mousedown', function (e) { engine.onPointerDown(e); });
+window.on('mousemove', function (e) { engine.onPointerMove(e); });
+window.on('mouseup', function (e) { engine.onPointerUp(e); });
+engine.canvas.on('wheel', function (e) { engine.onWheel(e); }, { passive: false });
+engine.canvas.on('contextmenu', (e) => e.preventDefault());
 
-themeBtn.on('click', () => {
-    applyTheme(theme === 'dark' ? 'light' : 'dark');
-    saveState();
-});
-
-aboutBtn.on('click', () => aboutOverlay.rmCls('hidden'));
-aboutClose.on('click', () => aboutOverlay.addCls('hidden'));
-aboutOverlay.on('click', (e) => {
-    if (e.target === aboutOverlay) aboutOverlay.addCls('hidden');
-});
-
-canvas.on('mousedown', onPointerDown);
-window.on('mousemove', onPointerMove);
-window.on('mouseup', onPointerUp);
-canvas.on('wheel', onWheel, { passive: false });
-canvas.on('contextmenu', (e) => e.preventDefault());
-
-if (zoomSlider) {
-    zoomSlider.on('input', () => {
-        const pct = parseInt(zoomSlider.value, 10) || 100;
-        setZoom(pct / 100);
+if (engine.zoomSlider) {
+    engine.zoomSlider.on('input', () => {
+        const pct = parseInt(engine.zoomSlider.value, 10) || 100;
+        engine.setZoom(pct / 100);
     });
 }
 
-if (canvasWidthInput) {
-    canvasWidthInput.on('change', applyCanvasSizeFromInputs);
-    canvasWidthInput.on('keydown', (e) => { if (e.key === 'Enter') applyCanvasSizeFromInputs(); });
+if (engine.canvasWidthInput) {
+    engine.canvasWidthInput.on('change', function () { engine.applyCanvasSizeFromInputs(); });
+    engine.canvasWidthInput.on('keydown', (e) => {
+        if (e.key === 'Enter') engine.applyCanvasSizeFromInputs();
+    });
 }
-if (canvasHeightInput) {
-    canvasHeightInput.on('change', applyCanvasSizeFromInputs);
-    canvasHeightInput.on('keydown', (e) => { if (e.key === 'Enter') applyCanvasSizeFromInputs(); });
+if (engine.canvasHeightInput) {
+    engine.canvasHeightInput.on('change', function () { engine.applyCanvasSizeFromInputs(); });
+    engine.canvasHeightInput.on('keydown', (e) => {
+        if (e.key === 'Enter') engine.applyCanvasSizeFromInputs();
+    });
 }
 
 window.on('resize', () => {
-    resizeCanvas();
-    render();
+    engine.resizeCanvas();
+    engine.render();
 });
 
-loadData();
+engine.updateZoomUI();
+engine.loadData();

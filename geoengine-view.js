@@ -1,81 +1,78 @@
 /**
- * geoengine-view.js — render, resize, color helpers
+ * geoengine-view.js — GeoEngine.prototype: render, resize, darken
  */
-function render() {
+GeoEngine.prototype.render = function () {
     const dpr = window.devicePixelRatio || 1;
-    const w = canvas.width / dpr;
-    const h = canvas.height / dpr;
-    // Clear full canvas in device pixels
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.restore();
+    const w = this.canvas.width / dpr;
+    const h = this.canvas.height / dpr;
+    this.ctx.save();
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.restore();
 
-    applyViewTransform();
-    drawMap(ctx, w, h, true);
-    drawCropOverlay(ctx, w, h);
-    drawMarquee(ctx);
-}
+    this.applyViewTransform();
+    this.drawMap(this.ctx, w, h, true);
+    this.drawCropOverlay(this.ctx, w, h);
+    this.drawMarquee(this.ctx);
+};
 
-function syncCanvasSizeInputs(cssW, cssH) {
-    if (canvasWidthInput && document.activeElement !== canvasWidthInput) {
-        canvasWidthInput.value = String(Math.round(cssW));
+GeoEngine.prototype.syncCanvasSizeInputs = function (cssW, cssH) {
+    if (this.canvasWidthInput && document.activeElement !== this.canvasWidthInput) {
+        this.canvasWidthInput.value = String(Math.round(cssW));
     }
-    if (canvasHeightInput && document.activeElement !== canvasHeightInput) {
-        canvasHeightInput.value = String(Math.round(cssH));
+    if (this.canvasHeightInput && document.activeElement !== this.canvasHeightInput) {
+        this.canvasHeightInput.value = String(Math.round(cssH));
     }
-}
+};
 
-function getRenderSize() {
-    const rect = mapContainer.getBoundingClientRect();
-    const cssW = (mapRenderW != null && mapRenderW > 0) ? mapRenderW : Math.max(1, rect.width);
-    const cssH = (mapRenderH != null && mapRenderH > 0) ? mapRenderH : Math.max(1, rect.height);
-    return { cssW, cssH, rect };
-}
+GeoEngine.prototype.getRenderSize = function () {
+    const rect = this.mapContainer.getBoundingClientRect();
+    const cssW = (this.mapRenderW != null && this.mapRenderW > 0) ? this.mapRenderW : Math.max(1, rect.width);
+    const cssH = (this.mapRenderH != null && this.mapRenderH > 0) ? this.mapRenderH : Math.max(1, rect.height);
+    return { cssW: cssW, cssH: cssH, rect: rect };
+};
 
-function resizeCanvas() {
+GeoEngine.prototype.resizeCanvas = function () {
     const dpr = window.devicePixelRatio || 1;
-    const { cssW, cssH, rect } = getRenderSize();
+    const size = this.getRenderSize();
+    const cssW = size.cssW;
+    const cssH = size.cssH;
+    const rect = size.rect;
 
-    canvas.width = Math.round(cssW * dpr);
-    canvas.height = Math.round(cssH * dpr);
-    // Display size: fit inside container while keeping aspect
-    const scale = Math.min(
-        rect.width / cssW || 1,
-        rect.height / cssH || 1,
-        1
-    );
+    this.canvas.width = Math.round(cssW * dpr);
+    this.canvas.height = Math.round(cssH * dpr);
+    const scale = Math.min(rect.width / cssW || 1, rect.height / cssH || 1, 1);
     const dispW = Math.max(1, cssW * scale);
     const dispH = Math.max(1, cssH * scale);
-    canvas.style.width = dispW + 'px';
-    canvas.style.height = dispH + 'px';
+    this.canvas.style.width = dispW + 'px';
+    this.canvas.style.height = dispH + 'px';
 
-    applyViewTransform();
-    if (!sel.w && !sel.h) {
-        initSelection(cssW, cssH);
-    } else if (sel.w || sel.h) {
-        clampSel(cssW, cssH);
-        syncSelToInputs();
+    this.applyViewTransform();
+    if (!this.sel.w && !this.sel.h) {
+        this.initSelection(cssW, cssH);
+    } else if (this.sel.w || this.sel.h) {
+        this.clampSel(cssW, cssH);
+        this.syncSelToInputs();
     }
-    clampView(cssW, cssH);
-    syncCanvasSizeInputs(cssW, cssH);
-}
+    this.clampView(cssW, cssH);
+    this.syncCanvasSizeInputs(cssW, cssH);
+};
 
-function applyCanvasSizeFromInputs() {
-    const w = parseInt(canvasWidthInput && canvasWidthInput.value, 10);
-    const h = parseInt(canvasHeightInput && canvasHeightInput.value, 10);
-    mapRenderW = (Number.isFinite(w) && w >= 100) ? w : null;
-    mapRenderH = (Number.isFinite(h) && h >= 100) ? h : null;
-    resetView();
-    resizeCanvas();
-    render();
-    saveState();
-}
+GeoEngine.prototype.applyCanvasSizeFromInputs = function () {
+    const w = parseInt(this.canvasWidthInput && this.canvasWidthInput.value, 10);
+    const h = parseInt(this.canvasHeightInput && this.canvasHeightInput.value, 10);
+    this.mapRenderW = (Number.isFinite(w) && w >= 100) ? w : null;
+    this.mapRenderH = (Number.isFinite(h) && h >= 100) ? h : null;
+    this.resetView();
+    this.resizeCanvas();
+    this.render();
+    this.saveState();
+};
 
-function darken(hex, amount) {
+GeoEngine.prototype.darken = function (hex, amount) {
     const num = parseInt(hex.slice(1), 16);
     const r = Math.max(0, (num >> 16) - amount);
     const g = Math.max(0, ((num >> 8) & 0xff) - amount);
     const b = Math.max(0, (num & 0xff) - amount);
     return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
-}
+};
